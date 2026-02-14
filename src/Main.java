@@ -64,7 +64,7 @@ public class Main {
     }
 }
 
-class _Headers {
+class Headers {
     private final Map<String, List<String>> _headers = new HashMap<>();
 
     void set(String key, String[] values) {
@@ -98,7 +98,7 @@ class _Headers {
 }
 
 interface HttpContext {
-    _Headers getRequestHeaders();
+    Headers getRequestHeaders();
 
     InputStream getBody();
 }
@@ -109,7 +109,7 @@ class Http1Context implements HttpContext {
 
     // request stuff
     private final InputStream body;
-    private final _Headers requestHeaders;
+    private final Headers requestHeaders;
 
     public Http1Context(InputStream src) throws IOException {
         src = new BufferedInputStream(src);
@@ -132,7 +132,7 @@ class Http1Context implements HttpContext {
     }
 
     @Override
-    public _Headers getRequestHeaders() {
+    public Headers getRequestHeaders() {
         return null;
     }
 
@@ -182,8 +182,8 @@ class Http1Context implements HttpContext {
         // TODO: validate method rlParts[1]
     }
 
-    private _Headers parseHeaders(List<String> rawHeaders) {
-        _Headers headers = new _Headers();
+    private Headers parseHeaders(List<String> rawHeaders) {
+        Headers headers = new Headers();
 
         for (String rawHeader : rawHeaders) {
             String[] headerParts = rawHeader.split(":\\s*", 2);
