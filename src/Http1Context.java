@@ -1,6 +1,4 @@
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -10,14 +8,16 @@ class Http1Context implements HttpContext {
 
     private String protocol;
     private String method;
-    private String path;
+    private String getRequestPath;
     private final InputStream body;
     private final Headers requestHeaders;
 
+    private final OutputStream responseStream;
     private final Headers responseHeaders;
 
-    public Http1Context(InputStream src) throws IOException {
+    public Http1Context(InputStream src, OutputStream out) throws IOException {
         src = new BufferedInputStream(src);
+        responseStream = new BufferedOutputStream(out);
 
         // request line
         String requestLine = readLine(src);
@@ -44,13 +44,40 @@ class Http1Context implements HttpContext {
     }
 
     @Override
-    public Headers getResponseHeaders() {
-        return responseHeaders;
+    public String getMethod() {
+        return method;
+    }
+
+    @Override
+    public String getRequestPath() {
+        return getRequestPath;
     }
 
     @Override
     public InputStream getBody() {
         return body;
+    }
+
+    @Override
+    public Headers getResponseHeaders() {
+        return responseHeaders;
+    }
+
+    public void writeResponse(InputStream src) throws IOException {
+        writeRequestLine(responseStream);
+        writeHeaders(responseStream);
+        src.transferTo(responseStream);
+
+        // TODO: do I need to close responseStream, bodyStream and/or SocketConnection?
+        responseStream.flush();
+    }
+
+    public void writeResponse(byte[] body) throws IOException {
+        writeRequestLine(responseStream);
+        writeHeaders(responseStream);
+        responseStream.write(body);
+
+        responseStream.flush();
     }
 
     private String readLine(InputStream src) throws IOException {
@@ -93,7 +120,7 @@ class Http1Context implements HttpContext {
         }
 
         method = rlParts[0];
-        path = rlParts[1];
+        getRequestPath = rlParts[1];
         protocol = rlParts[2];
     }
 
@@ -115,4 +142,21 @@ class Http1Context implements HttpContext {
         return headers;
     }
 
+    private void writeRequestLine(OutputStream out) throws IOException {
+        out.write("HTTP/1.1 200 OK\r\n".getBytes());
+    }
+
+    private void writeHeaders(OutputStream out) throws IOException {
+        for (var entry : responseHeaders.toMap().entrySet()) {
+            out.write(entry.getKey().getBytes());
+            out.write(": ".getBytes());
+            out.write(String.join(",", entry.getValue()).getBytes());
+            out.write('\r');
+            out.write('\n');
+        }
+
+//        out.write("Content-Type: text/plain\r\n".getBytes());
+        out.write('\r');
+        out.write('\n');
+    }
 }

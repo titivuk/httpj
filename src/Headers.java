@@ -3,6 +3,11 @@ import java.util.*;
 class Headers {
     private final Map<String, List<String>> _headers = new HashMap<>();
 
+    // it would be easier to extend Map than use separate class in this case
+    Map<String, List<String>> toMap() {
+        return Map.copyOf(_headers);
+    }
+
     void set(String key, String[] values) {
         this._headers.put(key, Arrays.asList(values));
     }

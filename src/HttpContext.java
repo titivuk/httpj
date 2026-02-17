@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.io.InputStream;
 
 interface HttpContext {
@@ -6,4 +7,12 @@ interface HttpContext {
     Headers getResponseHeaders();
 
     InputStream getBody();
+
+    String getMethod();
+
+    String getRequestPath();
+
+    void writeResponse(InputStream src) throws IOException;
+
+    void writeResponse(byte[] body) throws IOException;
 }
