@@ -5,6 +5,7 @@ import java.util.Optional;
 
 class Http1Context implements HttpContext {
     private static final byte CR = 13, LF = 10;
+    private static final String STATUS_LINE_TEMPLATE = "HTTP/1.1 %d %s\r\n";
 
     private String protocol;
     private String method;
@@ -14,6 +15,7 @@ class Http1Context implements HttpContext {
 
     private final OutputStream responseStream;
     private final Headers responseHeaders;
+    private int statusCode = 200;
 
     public Http1Context(InputStream src, OutputStream out) throws IOException {
         src = new BufferedInputStream(src);
@@ -63,6 +65,12 @@ class Http1Context implements HttpContext {
         return responseHeaders;
     }
 
+    @Override
+    public void setStatus(int statusCode) {
+        this.statusCode = statusCode;
+    }
+
+    @Override
     public void writeResponse(InputStream src) throws IOException {
         writeRequestLine(responseStream);
         writeHeaders(responseStream);
@@ -72,11 +80,18 @@ class Http1Context implements HttpContext {
         responseStream.flush();
     }
 
+    @Override
     public void writeResponse(byte[] body) throws IOException {
         writeRequestLine(responseStream);
         writeHeaders(responseStream);
         responseStream.write(body);
 
+        responseStream.flush();
+    }
+
+    @Override
+    public void noResponse() throws IOException {
+        writeRequestLine(responseStream);
         responseStream.flush();
     }
 
@@ -143,7 +158,7 @@ class Http1Context implements HttpContext {
     }
 
     private void writeRequestLine(OutputStream out) throws IOException {
-        out.write("HTTP/1.1 200 OK\r\n".getBytes());
+        out.write(STATUS_LINE_TEMPLATE.formatted(statusCode, StatusCode.reasonPhrase(statusCode)).getBytes());
     }
 
     private void writeHeaders(OutputStream out) throws IOException {

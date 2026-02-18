@@ -1,12 +1,8 @@
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,8 +30,8 @@ public class HttpServer {
 
                             HttpHandler handler = routes.get(ctx.getMethod() + " " + ctx.getRequestPath());
                             if (handler == null) {
-                                // TODO: 404
-                                ctx.writeResponse("Not Found".getBytes());
+                                ctx.setStatus(StatusCode.HTTP_NOT_FOUND);
+                                ctx.noResponse();
                                 return;
                             }
 
@@ -67,9 +63,4 @@ public class HttpServer {
             e.printStackTrace();
         }
     }
-}
-
-@FunctionalInterface
-interface HttpHandler {
-    void handle(HttpContext context);
 }
